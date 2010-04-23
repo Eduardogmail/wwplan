@@ -7,22 +7,22 @@ import logging
 import lib
 import ns3_radiomobile
 
-#def setup_plot():
-#    plot_data = {      
-#      "title": "Throughput",
-#      "x": "time [sec]",
-#      "y": "Throughput [Mbps]",
-#      "extraData": "Total",
-#    }
-
-#    gnuplot = ns3.Gnuplot("onoff.png", "Plot title")
-#    dataset = ns3.Gnuplot2dDataset("subtitle")
-#    dataset.SetStyle(ns3.Gnuplot2dDataset.LINES)
-#    dataset.Add(0, 10)
-#    dataset.Add(10, 25)
-#    dataset.Add(20, 15)
-#    gnuplot.AddDataset(dataset)
-#    gnuplot.GenerateOutput(ns3.ofstream("onoff.plt"))
+# Generalizate if necessary
+def create_througput_gnuplot(monitor_info, flow_id, filename, title, image_format="png"):
+    """Create Gnuplot PLT file for a saved FlowStats."""  
+    gnuplot = ns3.Gnuplot("%s.%s" % (filename, image_format), title)
+    dataset = ns3.Gnuplot2dDataset("Flow %d" % flow_id)
+    dataset.SetStyle(ns3.Gnuplot2dDataset.LINES)
+    gnuplot.SetLegend("Time (seconds)", "Troughtput (Mbps)")    
+    flow_stats_steps = monitor_info["flow_stats_steps"]
+    pairs = flow_stats_steps[flow_id]
+    dataset.Add(pairs[0][0], 0)
+    for (time_x, y) in get_flow_stats_deltas(pairs, "rxBytes"):
+        dataset.Add(time_x, 8 * y / 1e6)
+    gnuplot.AddDataset(dataset)
+    pltfilename = "%s.plt" % filename
+    logging.info("created Gnuplot for flow '%d': %s" % (flow_id, pltfilename))
+    gnuplot.GenerateOutput(ns3.ofstream(pltfilename))
 
 ### Monitoring
 
@@ -52,6 +52,12 @@ def enable_monitor(network, interval=None):
         ns3.Simulator.Schedule(ns3.Seconds(interval), _monitor_step, flow_stats_steps)
     return dict(helper=flowmon_helper, monitor=monitor, 
         ip2info=ip2info, flow_stats_steps=flow_stats_steps)
+
+def get_flow_stats_deltas(pairs, attr):
+    for (start_time, fs1), (end_time, fs2) in lib.pairwise(pairs):
+        delta = end_time - start_time
+        value = (getattr(fs2, attr) - getattr(fs1, attr)) / delta
+        yield end_time, value
 
 def print_stats(output, flow_id, flow_stats, flow_stats_steps, show_histograms):
     """
@@ -97,13 +103,8 @@ def print_stats(output, flow_id, flow_stats, flow_stats_steps, show_histograms):
         output(1, "Packets dropped by reason %d: %d packets" % (reason, drops))
         
     if flow_id in flow_stats_steps:
-        def _get_values(pairs, attr):
-            for (start_time, fs1), (end_time, fs2) in lib.pairwise(pairs):
-                delta = end_time - start_time
-                value = (getattr(fs2, attr) - getattr(fs1, attr)) / delta
-                yield end_time, value
-        result = ["%s=%s" % (delta, value) for (delta, value) in 
-                  _get_values(flow_stats_steps[flow_id], "rxBytes")]
+        result = ["%s=%s" % (delta, 8.0*value) for (delta, value) in 
+                  get_flow_stats_deltas(flow_stats_steps[flow_id], "rxBytes")]
         output(1, "Rx Throughput steps (bps): %s" % ", ".join(result))
 
 def print_monitor_results(monitor_info, show_histograms=False, stream=sys.stdout):

@@ -4,9 +4,10 @@ import ns3
 import ns3_lib
 
 DESCRIPTION = "Run a OnOff client + sink server example"
-#ns3.LogComponentEnable("PacketSink", ns3.LOG_LEVEL_ALL | ns3.LOG_PREFIX_TIME)
 
 def simulation(network):
+    ns3.LogComponentEnable("PacketSink", ns3.LOG_LEVEL_ALL | ns3.LOG_PREFIX_TIME)
+    
     # Applications    
     ns3_lib.onoff_app(network, client_node="Urcos", 
         server_node="Huiracochan", server_device="wifi1", 
@@ -27,6 +28,7 @@ def simulation(network):
     ns3_lib.run_simulation(3.0)
     ns3_lib.print_monitor_results(monitor_info)
     ns3_lib.save_monitor_xmldata(monitor_info, "onoff.flowmon.xml")
+    ns3_lib.create_througput_gnuplot(monitor_info, 1, "Urcos-Huiracochan 1Mbps", "Josjo network")
     
 if __name__ == '__main__':
     sys.exit(ns3_lib.simulation_main(sys.argv[1:], simulation, DESCRIPTION))

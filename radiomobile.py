@@ -220,7 +220,7 @@ def main(args):
     import os
     import yaml
     if len(args) != 1:
-        sys.stderr.write("Usage: %s REPORT_TXT_PATH\n" % os.path.basename(sys.argv[0]))
+        sys.stderr.write("Usage: %s REPORT_TXT\n" % os.path.basename(sys.argv[0]))
         return 2
     text_report_filename, = args
     report = parse_report(text_report_filename)
