@@ -55,24 +55,34 @@ def strip_iter_items(it, condition=bool):
     return list(itertools.ifilter(condition, it))
 
 def strip_list(lst, condition=bool):
-    """Strip element in iterable."""
+    """Strip elements (from head and tail) of iterable that do not match condition."""
     start = first(idx for (idx, x) in enumerate(lst) if condition(x)) 
     end = first((len(lst)-idx) for (idx, x) in enumerate(reversed(lst)) if condition(x))
     return lst[start:end]
     
-def find_columns(line, fields):
-    """Return list of pairs (field, index) for fields in line."""
-    return [(field, line.index(field)) for field in fields]
-
 def pairwise(iterable):
     "s -> (s0, s1), (s1, s2), (s2, s3), ..."
     a, b = itertools.tee(iterable)
     return itertools.izip(a, itertools.islice(b, 1, None))
 
+def iter_block(lines, startre, endre):
+    """Yield lines whose bounds are defined by a start/end regular expressions."""
+    from_startre = itertools.dropwhile(lambda s: not re.match(startre, s), lines)
+    for line in from_startre:
+        yield line
+        if re.match(endre, line):
+            break
+
+def keyify(s):
+    """Replaces spaces in string for underscores and remove chars '.:'"""
+    return re.sub("\s+", "_", s).replace(".", "").replace(":", "").lower() 
+
 def parse_table(lines, fields, keyify_cb=None):
     """Parse table and yield dictionaries containing the row info."""
+    def _find_columns(line, fields):
+        return [(field, line.index(field)) for field in fields]
     header, units = lines[0], lines[1:]
-    columns = find_columns(header, fields)
+    columns = _find_columns(header, fields)
     fields, indexes = zip(*columns)
     for line in strip_iter_items(units):
         def _pairs():
@@ -80,15 +90,4 @@ def parse_table(lines, fields, keyify_cb=None):
                 key = (keyify(field) if (not keyify_cb or keyify_cb(field)) else field)
                 value = line[start:end].strip()
                 yield (key, value)
-        yield dict(_pairs())        
-
-def iter_block(lines, startre, endre):
-    """Yield lines whose bounds are defined by a start/end regular expressions."""
-    for line in itertools.dropwhile(lambda s: not re.match(startre, s), lines):
-        yield line
-        if re.match(endre, line):
-            break
-
-def keyify(s):
-    """Replaces spaces in string for underscores."""
-    return re.sub("\s+", "_", s).replace(".", "").replace(":", "").lower() 
+        yield dict(_pairs())

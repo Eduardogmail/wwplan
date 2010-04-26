@@ -1,36 +1,36 @@
 """
 Interface module between Radio Mobile and ns-3.
 
-Network struct has the following attributes:
+The struct 'Network' has the following attributes:
     
-    - nodes: dictionary of nodes (name, node_attributes). Node attributes are:
-        * ns3_node: ns3.Node object for this node.
+    * nodes: dictionary of nodes with pairs (name, node_attributes). Node attributes:
+        * ns3_node: ns3.Node object for the node.
         * location: (x, y) in meters.
-        * devices: dictionary of devices (name, device_attributes). Device attributes are:
+        * devices: dictionary of devices with pairs (name, device_attributes). Device attributes:
             * ns3_device: ns3.NetDevice object for this device.
             * helper: WiFi or WiMax helper used to create the device.
             * phy_helper: WiFi or WiMax PHY Helper used to create the device.
-            * interfaces: List of ns3.Ipv4Addresss objects.
+            * interfaces: List of ns3.Ipv4Addresss objects attached to device.
             
-    - networks: dictionary of networks (name, network_struct). Network struct attributes are:
+    * networks: dictionary of networks with pairs (name, network_struct). Network struct attributes:
         * node: Node name.
-        * terminal: List of terminal. 
+        * terminal: List of terminals name. 
 
 Examples:
             
 >>> network = create_network_from_report_file("myreport.txt")
->>> network.nodes
 >>> network.nodes["Urcos"].devices
 >>> network.nodes["Urcos"].devices["wifi1"].ns3_device
 >>> network.networks["Huiracochan"].terminals
 """
 import sys
-import ns3
 import re
 import logging
 import math
-import yaml
 from pprint import pprint, pformat
+
+import yaml
+import ns3
 
 import lib
 import radiomobile
@@ -44,25 +44,6 @@ def bracket_split(s):
     match = re.match("^(.*?)\s*\[(.*)\]$\s*", s)
     return (match.groups() if match else (s, None))
 
-def add_devices_to_node(node, network, ns3_device, helper=None, phy_helper=None):
-    """Add a ns-3 device to a node structure."""
-    attributes = network[node.name]
-    system_name = attributes["system"]
-    device = lib.Struct("Device",
-        ns3_device=ns3_device,
-        helper=helper,
-        phy_helper=phy_helper,
-        interfaces=[])
-    node.devices[system_name] = device
-    
-def add_interface_to_device_node(node, network, address):
-    """Add a ns-3 interface (address) to node.devices[system_name].interfaces."""
-    attributes = network[node.name]
-    system_name = attributes["system"]
-    interface = lib.Struct("Interface", address=address)
-    logging.info("Add interface to node %s (%s)" % (node.name, str(address)))
-    node.devices[system_name].interfaces.append(interface)
-
 def get_max_distance_in_network(nodes, node_member, terminal_members):
     """Get maximum distance between node and terminals."""
     def get_distance(t1, t2):
@@ -72,6 +53,22 @@ def get_max_distance_in_network(nodes, node_member, terminal_members):
     node_location = nodes[node_member].location    
     return max(get_distance(nodes[terminal_member].location, node_location) 
                for terminal_member in terminal_members)
+
+def add_devices_to_node(node, network, ns3_device, helper=None, phy_helper=None):
+    """Add a ns-3 device to a node structure."""
+    attributes = network[node.name]
+    system_name = attributes["system"]
+    device = lib.Struct("Device", ns3_device=ns3_device, helper=helper,
+        phy_helper=phy_helper, interfaces=[])
+    node.devices[system_name] = device
+    
+def add_interface_to_device_node(node, network, address):
+    """Add a ns-3 interface (address) to node.devices[system_name].interfaces."""
+    attributes = network[node.name]
+    system_name = attributes["system"]
+    interface = lib.Struct("Interface", address=address)
+    logging.info("Add interface to node %s (%s)" % (node.name, str(address)))
+    node.devices[system_name].interfaces.append(interface)
 
 def set_wifi_timeouts(device, max_distance):
     """
@@ -90,14 +87,7 @@ def set_wifi_timeouts(device, max_distance):
         mac.GetMaxPropagationDelay().GetNanoSeconds() * 2)
     mac.SetSlot(slot_time)
 
-def build_network_dict(network):
-    """
-    Get a list of dictionaries from netinfo and build a
-    dictionary with pairs (network_name, attributes).
-    """
-    return dict((d["name"], d) for d in [network["node"]] + network["terminals"])
-
-def wifi_network(network, net_index, short_net_name, ns3_mode, nodes, 
+def wifi_network(network_info, net_index, short_net_name, ns3_mode, nodes, 
                  get_node_from_ns3node, node_member, terminal_members):
     """Configure a WiFi network (1 AP - n STAs)."""                    
     max_distance = get_max_distance_in_network(nodes, node_member, terminal_members)
@@ -118,7 +108,6 @@ def wifi_network(network, net_index, short_net_name, ns3_mode, nodes,
     address_helper = ns3.Ipv4AddressHelper()
     netaddr = "10.1.%d.0" % net_index
     address_helper.SetBase(ns3.Ipv4Address(netaddr), ns3.Ipv4Mask("255.255.255.0"))    
-    network_info = build_network_dict(network)
     
     def configure_node(wifi_helper, name):
         ns3_node = nodes[name].ns3_node
@@ -156,11 +145,11 @@ def wifi_network(network, net_index, short_net_name, ns3_mode, nodes,
         "BeaconInterval", ns3.TimeValue(ns3.Seconds(2.5)))        
     configure_node(wifi_helper, node_member)
 
-def wimax_network(network, net_index, short_net_name, nodes, 
+def wimax_network(network_info, net_index, short_net_name, nodes, 
                   get_node_from_ns3node, node_member, terminal_members,
                   scheduler=ns3.WimaxHelper.SCHED_TYPE_RTPS):
     """Configure a WiMax network (1 BS - n SSs)."""                      
-    logging.info("Network '%s': AP-node = '%s', STA-nodes = %s" % 
+    logging.info("Network '%s': BS-node = '%s', SS-nodes = %s" % 
         (short_net_name, node_member, terminal_members))
         
     channel = ns3.SimpleOfdmWimaxChannel(ns3.SimpleOfdmWimaxChannel.FRIIS_PROPAGATION)
@@ -169,7 +158,6 @@ def wimax_network(network, net_index, short_net_name, nodes,
     address_helper = ns3.Ipv4AddressHelper()
     netaddr = "10.1.%d.0" % net_index
     address_helper.SetBase(ns3.Ipv4Address(netaddr), ns3.Ipv4Mask("255.255.255.0"))
-    network_info = build_network_dict(network)
     
     def configure_node(name, device_type):
         ns3_node = nodes[name].ns3_node
@@ -210,50 +198,6 @@ def wimax_network(network, net_index, short_net_name, nodes,
                     
     configure_node(node_member, ns3.WimaxHelper.DEVICE_TYPE_BASE_STATION)
 
-def get_netinfo_from_report(report):
-    def _transform(d, properties):
-        for (k, v) in d.items():
-            if k in properties:
-                new_name, transform = properties[k]
-                transform = transform or (lambda x: x)
-                yield (new_name, transform(v))    
-    output = {}    
-    
-    units = {}
-    for unit_name, unit in report.units.iteritems():
-        properties = {
-            "elevation": ("elevation", None),
-            "location_meters": ("location", lambda loc: list(loc)),
-        }
-        units[unit_name] = dict(_transform(vars(unit), properties))
-    output["units"] = units
-    
-    networks = {}
-    for net_name, net in report.nets.iteritems():
-        short_net_name, smode = bracket_split(net_name)        
-        if smode.startswith("wifi"):
-            mode = dict(standard="wifi", wifi_mode=smode)
-        elif smode.startswith("wimax"):
-            sp = smode.split("-")
-            standard = "wimax"
-            scheduler = ("simple" if len(sp) < 2 else sp[1])
-            mode = dict(standard="wimax", wimax_scheduler=scheduler)        
-        nodes, terminals = lib.partition(net.net_members.items(),
-            lambda (name, member): member.role.lower() in ("node", "master"))
-        assert len(nodes) == 1
-        def _get_info(name, obj):
-            short_system_name, wimax_mode = bracket_split(obj.system)
-            d = dict(name=name, system=short_system_name, wimax_mode=wimax_mode)
-            return dict((k, v) for (k, v) in d.items() if v)                     
-        network_info = {
-            "mode": mode,
-            "node": _get_info(*nodes[0]),
-            "terminals": [_get_info(*terminal) for terminal in terminals],
-        }
-        networks[short_net_name] = network_info 
-    output["networks"] = networks
-    return output
-
 def create_network(netinfo):
     """Create a network Struct from a RadioMobile parsed text report."""
     nodes = {}
@@ -287,13 +231,15 @@ def create_network(netinfo):
         
         networks[name] = lib.Struct("network", node=node_member, terminals=terminal_members)
         mode = network["mode"]
-                      
+        network_info = dict((d["name"], d) for d in [network["node"]] + network["terminals"])
+
+                     
         if mode["standard"].startswith("wifi"):
-            wifi_network(network, net_index, net_name, mode["wifi_mode"], nodes, 
+            wifi_network(network_info, net_index, net_name, mode["wifi_mode"], nodes, 
                          get_node_from_ns3node, node_member, terminal_members)
         elif mode["standard"].startswith("wimax"):
             scheduler = getattr(ns3.WimaxHelper, "SCHED_TYPE_" + mode["wimax_scheduler"].upper())
-            wimax_network(network, net_index, net_name, nodes, 
+            wimax_network(network_info, net_index, net_name, nodes, 
                           get_node_from_ns3node, node_member, terminal_members,
                           scheduler)
         else:
@@ -315,6 +261,53 @@ def create_network(netinfo):
     
     ns3.Ipv4GlobalRoutingHelper.PopulateRoutingTables()    
     return lib.Struct("Network", nodes=nodes, networks=networks)
+
+def get_netinfo_from_report(report):
+    """Get netinfo (dictionary) from Radio Mobile report struct."""
+    def _transform(d, properties):
+        for (k, v) in d.items():
+            if k in properties:
+                new_name, transform = properties[k]
+                transform = transform or (lambda x: x)
+                yield (new_name, transform(v))
+                    
+    output = {}
+            
+    units = {}
+    for unit_name, unit in report.units.iteritems():
+        transform_properties = {
+            "elevation": ("elevation", None),
+            "location_meters": ("location", lambda loc: list(loc)),
+        }
+        units[unit_name] = dict(_transform(vars(unit), transform_properties))
+    output["units"] = units
+    
+    networks = {}
+    for net_name, net in report.nets.iteritems():
+        short_net_name, smode = bracket_split(net_name)        
+        if smode.startswith("wifi"):
+            mode = dict(standard="wifi", wifi_mode=smode)
+        elif smode.startswith("wimax"):
+            sp = smode.split("-")
+            standard = "wimax"
+            scheduler = ("simple" if len(sp) < 2 else sp[1])
+            mode = dict(standard="wimax", wimax_scheduler=scheduler)        
+        nodes, terminals = lib.partition(net.net_members.items(),
+            lambda (name, member): member.role.lower() in ("node", "master"))
+        assert len(nodes) == 1
+        def _get_info(name, obj):
+            short_system_name, wimax_mode = bracket_split(obj.system)
+            d = dict(name=name, system=short_system_name, wimax_mode=wimax_mode)
+            return dict((k, v) for (k, v) in d.items() if v)                     
+        network_info = {
+            "mode": mode,
+            "node": _get_info(*nodes[0]),
+            "terminals": [_get_info(*terminal) for terminal in terminals],
+        }
+        networks[short_net_name] = network_info 
+    output["networks"] = networks
+    
+    return output
   
 def create_network_from_report_file(filename):
     """Create a network Struct from a RadioMobile text-report filename."""
@@ -332,12 +325,21 @@ def create_network_from_yaml_file(yamlfile):
 
 ### Main
 
-def main(args):
-    """Parse a Radio Mobile report and output the netinfo YML contents to stdout."""
-    report_filename, = args
+def main(args, stream=sys.stdout):
+    import optparse
+    usage = """Usage: %%prog [OPTIONS] radiomobile_report_txt_path
+
+    Parse a Radio Mobile report and write the netinfo YML to stdout."""  
+    parser = optparse.OptionParser(usage)
+    options, args0 = parser.parse_args(args)
+    
+    if len(args0) != 1:
+        parser.print_help()
+        return 2
+    report_filename, = args0
     report = radiomobile.parse_report(report_filename)
     netinfo = get_netinfo_from_report(report)
-    sys.stdout.write(yaml.dump(netinfo))    
+    stream.write(yaml.dump(netinfo))    
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

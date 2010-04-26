@@ -7,7 +7,8 @@ import logging
 import lib
 import ns3_radiomobile
 
-# Generalizate if necessary
+### Plots
+
 def create_througput_gnuplot(monitor_info, flow_id, filename, title, image_format="png"):
     """Create Gnuplot PLT file for a saved FlowStats."""  
     gnuplot = ns3.Gnuplot("%s.%s" % (filename, image_format), title)
@@ -50,10 +51,15 @@ def enable_monitor(network, interval=None):
     flow_stats_steps = {}
     if interval is not None:
         ns3.Simulator.Schedule(ns3.Seconds(interval), _monitor_step, flow_stats_steps)
-    return dict(helper=flowmon_helper, monitor=monitor, 
-        ip2info=ip2info, flow_stats_steps=flow_stats_steps)
+    monitor_info = dict(
+        helper=flowmon_helper, 
+        monitor=monitor, 
+        ip2info=ip2info, 
+        flow_stats_steps=flow_stats_steps)
+    return monitor_info
 
 def get_flow_stats_deltas(pairs, attr):
+    """Yield pairs (time, value) for increments in input pairs using attribute 'attr'."""
     for (start_time, fs1), (end_time, fs2) in lib.pairwise(pairs):
         delta = end_time - start_time
         value = (getattr(fs2, attr) - getattr(fs1, attr)) / delta
@@ -117,7 +123,7 @@ def print_monitor_results(monitor_info, show_histograms=False, stream=sys.stdout
     classifier = monitor_info["helper"].GetClassifier()
     for flow_id, flow_stats in monitor.GetFlowStats():
         t = classifier.FindFlow(flow_id)
-        proto = {6: 'TCP', 17: 'UDP'}.get(t.protocol, "PROTOCOL_UNKNOWN")
+        proto = {6: 'TCP', 17: 'UDP'}.get(t.protocol, "PROTOCOL-UNKNOWN")
         source = monitor_info["ip2info"][str(t.sourceAddress)]
         source_name, source_device = source["node_name"], source["device_name"]
         dest = monitor_info["ip2info"][str(t.destinationAddress)]
@@ -192,9 +198,7 @@ def onoff_app(network, client_node, server_node, server_device,
     client_apps.Start(ns3.Seconds(start))
     client_apps.Stop(ns3.Seconds(stop))
 
-def get_address_from_node(node, device_name, interface_index=0):
-    """Return a nd3.Ipv4Address object for the interface in device node."""
-    return node.devices[device_name].interfaces[interface_index].address
+### Wimax specific functions
 
 def add_wimax_service_flow(network, install, source, dest,
         protocol, direction, scheduling, priority):
@@ -206,6 +210,9 @@ def add_wimax_service_flow(network, install, source, dest,
     scheduling: "be" | "rtps" | "ugs"
     priority: 0-127    
     """ 
+    def get_address_from_node(node, device_name, interface_index=0):
+        """Return a nd3.Ipv4Address object for the interface in device node."""
+        return node.devices[device_name].interfaces[interface_index].address
     install_node, install_device = install
     source_node, source_device, source_port = source
     dest_node, dest_device, dest_port = dest           
@@ -235,11 +242,17 @@ def add_wimax_service_flow(network, install, source, dest,
 def run_simulation(stop=None):
     """Run simulation until 'stop' time."""
     if stop:
+        logging.debug("Set simulation duration: %0.2f seconds" % stop)
         ns3.Simulator.Stop(ns3.Seconds(stop))
+    logging.debug("Run simulation")
     ns3.Simulator.Run()
+    logging.debug("Simulation finished")
     ns3.Simulator.Destroy()    
    
+### Main wrapper
+
 def simulation_main(args, simulation, help):
+    """Wraps a simulation function with command-line support."""
     usage = """Usage: %%prog [OPTIONS] radiomobile_report_txt_path
 
     %s""" % help 
