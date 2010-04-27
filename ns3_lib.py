@@ -9,20 +9,29 @@ import ns3_radiomobile
 
 ### Plots
 
-def create_througput_gnuplot(monitor_info, flow_id, filename, title, image_format="png"):
+def get_available_plots():
+    """Return dictionaries of pairs (plot_key, plot_function) for all available plots."""
+    return {
+        "throughput": create_througput_gnuplot,
+    }
+
+def create_througput_gnuplot(monitor_info, title, filename, flow_ids=None, image_format="png"):
     """Create Gnuplot PLT file for a saved FlowStats."""  
     gnuplot = ns3.Gnuplot("%s.%s" % (filename, image_format), title)
-    dataset = ns3.Gnuplot2dDataset("Flow %d" % flow_id)
-    dataset.SetStyle(ns3.Gnuplot2dDataset.LINES)
-    gnuplot.SetLegend("Time (seconds)", "Troughtput (Mbps)")    
+    gnuplot.SetLegend("Time (seconds)", "Throughput (Mbps)")    
     flow_stats_steps = monitor_info["flow_stats_steps"]
-    pairs = flow_stats_steps[flow_id]
-    dataset.Add(pairs[0][0], 0)
-    for (time_x, y) in get_flow_stats_deltas(pairs, "rxBytes"):
-        dataset.Add(time_x, 8 * y / 1e6)
-    gnuplot.AddDataset(dataset)
+    flow_ids = flow_ids or flow_stats_steps.keys()
+    for flow_id in flow_ids:
+        dataset = ns3.Gnuplot2dDataset("Flow %d" % flow_id)
+        dataset.SetStyle(ns3.Gnuplot2dDataset.LINES)
+        pairs = flow_stats_steps[flow_id]
+        dataset.Add(pairs[0][0], 0)
+        for (time_x, y) in get_flow_stats_deltas(pairs, "rxBytes"):
+            dataset.Add(time_x, 8 * y / 1e6)
+        gnuplot.AddDataset(dataset)
     pltfilename = "%s.plt" % filename
-    logging.info("created Gnuplot for flow '%d': %s" % (flow_id, pltfilename))
+    logging.info("created gnuplot (%s) for %d flows (%s): %s" % 
+        (title, len(flow_ids), ", ".join(map(str, flow_ids)), pltfilename))
     gnuplot.GenerateOutput(ns3.ofstream(pltfilename))
 
 ### Monitoring
@@ -138,11 +147,20 @@ def save_monitor_xmldata(monitor_info, filename):
     monitor_info["monitor"].SerializeToXmlFile(filename, True, True)
 
 ### Applications
+
+def get_available_applications():
+    """Return dictionary of pairs (app_key, app_func) for all available applications."""
+    return  {
+        "udp_echo": udp_echo_app,
+        "onoff": onoff_app,
+    }
    
 def udp_echo_app(network, client_node, server_node, server_device, start, stop, 
                  packets=1, interval=1.0, port=9, packet_size=1024):
     """Set up a UDP echo client/server."""                     
     server = network.nodes[server_node]
+    assert server_device in server.devices, \
+        "Device '%s' not found, available: %s" % (server_device, ", ".join(server.devices)) 
     server_address = server.devices[server_device].interfaces[0].address
     echoServer = ns3.UdpEchoServerHelper(port)
     serverApps = echoServer.Install(server.ns3_node)
@@ -163,6 +181,8 @@ def onoff_app(network, client_node, server_node, server_device,
               access_class=None, ontime=1, offtime=0):
     """Set up a OnOff client + sink server."""                  
     server = network.nodes[server_node]
+    assert server_device in server.devices, \
+        "Device '%s' not found, available: %s" % (server_device, ", ".join(server.devices)) 
     server_address = server.devices[server_device].interfaces[0].address
     
     local_address = ns3.InetSocketAddress(ns3.Ipv4Address.GetAny(), port)
@@ -212,13 +232,16 @@ def add_wimax_service_flow(network, install, source, dest,
     """ 
     def get_address_from_node(node, device_name, interface_index=0):
         """Return a nd3.Ipv4Address object for the interface in device node."""
+        assert device_name in node.devices, \
+            "Device '%s' not found, available: %s" % (device_name, ", ".join(node.devices))
         return node.devices[device_name].interfaces[interface_index].address
     install_node, install_device = install
     source_node, source_device, source_port = source
     dest_node, dest_device, dest_port = dest           
     network_node = network.nodes[install_node]
-    address = network_node.devices[install_device].interfaces[0].address    
-    ss_device = network_node.devices[install_device].ns3_device
+    device = network_node.devices[install_device]
+    address = device.interfaces[0].address    
+    ss_device = device.ns3_device
     assert isinstance(ss_device, ns3.SubscriberStationNetDevice)
     source_address = get_address_from_node(network.nodes[source_node], source_device)
     dest_address = get_address_from_node(network.nodes[dest_node], dest_device)    
@@ -236,11 +259,44 @@ def add_wimax_service_flow(network, install, source, dest,
     down_link_flow = wimax_helper.CreateServiceFlow(ns3_direction,
         ns3_service_flow, down_link_classifier)
     ss_device.AddServiceFlow(down_link_flow)
+    device.wimax_flow_services.append(down_link_flow)
 
 ### Simulation funcions
 
-def run_simulation(stop=None):
+def add_default_wimax_service_flows(network):
+    """Add a default Best-Effort service flows for WiMAX Subscriber Stations device."""
+    for node_name, node_attrs in network.nodes.iteritems():
+        for device_name, device_attrs in node_attrs.devices.iteritems():
+            if device_attrs.wimax_flow_services:
+                continue
+            ss_device = device_attrs.ns3_device
+            if not isinstance(ss_device, ns3.SubscriberStationNetDevice):
+                continue
+            dest_address = device_attrs.interfaces[0].address
+            wimax_helper = device_attrs.helper 
+            protocol = 17
+            flow_type=ns3.ServiceFlow.SF_TYPE_BE
+            down_link_classifier = ns3.IpcsClassifierRecord(
+                ns3.Ipv4Address("0.0.0.0"),
+                ns3.Ipv4Mask("0.0.0.0"),
+                dest_address,
+                ns3.Ipv4Mask("255.255.255.255"),
+                0, 65535, 0, 65535, protocol, 0)
+            down_link_flow = wimax_helper.CreateServiceFlow(
+                ns3.ServiceFlow.SF_DIRECTION_DOWN,
+                flow_type,
+                down_link_classifier)
+            ss_device.AddServiceFlow(down_link_flow)
+            device_attrs.wimax_flow_services.append(down_link_flow)
+
+def run_simulation(network, stop=None):
     """Run simulation until 'stop' time."""
+    
+    # In the current implementation of ns-3, if you try to use a WiMax
+    # link where no service flow was configure, it will simply throw a 
+    # Segmentation Fault. So we have to add default flows (only
+    # unconfigured ss device). 
+    add_default_wimax_service_flows(network)    
     if stop:
         logging.debug("Set simulation duration: %0.2f seconds" % stop)
         ns3.Simulator.Stop(ns3.Seconds(stop))
@@ -248,9 +304,14 @@ def run_simulation(stop=None):
     ns3.Simulator.Run()
     logging.debug("Simulation finished")
     ns3.Simulator.Destroy()    
-   
-### Main wrapper
 
+### Main wrapper for Python simulations
+
+def set_logging_level(vlevel):
+    levels = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
+    level = levels[min(vlevel, len(levels)-1)]
+    ns3_radiomobile.set_logging_level(level)
+    
 def simulation_main(args, simulation, help):
     """Wraps a simulation function with command-line support."""
     usage = """Usage: %%prog [OPTIONS] radiomobile_report_txt_path
@@ -262,10 +323,8 @@ def simulation_main(args, simulation, help):
     parser.add_option('-n', '--netinfo', dest='netinfo', 
       default=None, help='Use a netinfo YML file')
     options, args0 = parser.parse_args(args)
+    set_logging_level(options.vlevel)
     
-    levels = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
-    level = levels[min(options.vlevel, len(levels)-1)]
-    ns3_radiomobile.set_logging_level(level)
     if options.netinfo:
         network = ns3_radiomobile.create_network_from_yaml_file(options.netinfo)
     elif len(args0) == 1:

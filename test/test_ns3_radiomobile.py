@@ -68,15 +68,16 @@ class Ns3RadioMobileTest(unittest.TestCase):
         self.assert_(isinstance(josjo2.ns3_node, ns3.Node))         
         self.assertEqual(josjo2.location, [21728, 5837])
         
-        self.assertEqual(josjo2.devices.keys(), ["wifi2", "wimax1"])
-        wifi2 = josjo2.devices["wifi2"]
+        self.assertEqual(set(josjo2.devices.keys()), 
+            set(["Josjo1-Josjo2-wifi2", "Josjo2-wimax1"]))
+        wifi2 = josjo2.devices["Josjo1-Josjo2-wifi2"]
         self.assert_(isinstance(wifi2.ns3_device, ns3.WifiNetDevice))
         self.assert_(isinstance(wifi2.helper, ns3.WifiHelper))
         self.assert_(isinstance(wifi2.phy_helper, ns3.WifiPhyHelper))
         self.assertEqual(len(wifi2.interfaces), 1)
         self.assert_(isinstance(wifi2.interfaces[0].address, ns3.Ipv4Address))
 
-        wimax1 = josjo2.devices["wimax1"]
+        wimax1 = josjo2.devices["Josjo2-wimax1"]
         self.assert_(isinstance(wimax1.ns3_device, ns3.BaseStationNetDevice))
         self.assert_(isinstance(wimax1.helper, ns3.WimaxHelper))
         self.assertEqual(len(wimax1.interfaces), 1)

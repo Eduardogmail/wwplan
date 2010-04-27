@@ -1,0 +1,45 @@
+networks:
+  Huiracochan:
+    mode: {standard: wifi, wifi_mode: wifia-6mbs}
+    node: {name: Huiracochan, system: wifi1}
+    terminals:
+    - {name: Urcos, system: wifi1}
+  Josjo1:
+    mode: {standard: wifi, wifi_mode: wifia-6mbs}
+    node: {name: Josjojauarina 1, system: wifi1}
+    terminals:
+    - {name: Urpay, system: wifi1}
+    - {name: Huiracochan, system: wifi1}
+  Josjo1-Josjo2:
+    mode: {standard: wifi, wifi_mode: wifia-6mbs}
+    node: {name: Josjojauarina 1, system: wifi1}
+    terminals:
+    - {name: Josjojauarina 2, system: wifi2}
+  Josjo2:
+    mode: {standard: wimax, wimax_scheduler: rtps}
+    node: {name: Josjojauarina 2, system: wimax1}
+    terminals:
+    - {name: Ccatcca, system: wimax2, wimax_mode: QAM64_34}
+    - {name: Kcauri, system: wimax2, wimax_mode: QAM64_34}
+units:
+  Ccatcca:
+    elevation: 374
+    location: [35979, 12228]
+  Huiracochan:
+    elevation: 254
+    location: [-7690, -11859]
+  Josjojauarina 1:
+    elevation: 280
+    location: [0, 0]
+  Josjojauarina 2:
+    elevation: 220
+    location: [21728, 5837]
+  Kcauri:
+    elevation: 864
+    location: [36559, 768]
+  Urcos:
+    elevation: 274
+    location: [2533, -19694]
+  Urpay:
+    elevation: 248
+    location: [-16357, -1045]
