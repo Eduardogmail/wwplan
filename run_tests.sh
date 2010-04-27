@@ -1,9 +1,10 @@
 #!/bin/bash
 set -e
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../build/debug
-export PYTHONPATH=$PYTHONPATH:../build/debug:.
-for TEST in $(ls test/*.py); do
+NS3PATH=${NS3PATH:-..}
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${NS3PATH}/build/debug
+export PYTHONPATH=$PYTHONPATH:${NS3PATH}/build/debug:.
+for TEST in test/*.py; do
   echo "$TEST"
-  python $TEST
+  python $TEST || true
 done
