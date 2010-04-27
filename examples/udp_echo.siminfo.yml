@@ -1,0 +1,42 @@
+description: UDP ping
+version: 0.0.1
+network: cusco-ne.netinfo.yml  
+
+simulation:
+  duration: 10.0
+
+logs:
+  UdpEchoClientApplication: "level_info|prefix_time"
+  UdpEchoServerApplication: "level_info|prefix_time"
+    
+wimax_service_flows:
+  - install: ["Ccatcca", "Josjo2-wimax2"]
+    source: ["Urpay", "Josjo1-wifi1", null]
+    dest: ["Ccatcca", "Josjo2-wimax2", 9]
+    protocol: UDP
+    direction: down
+    scheduling: RTPS
+    priority: 0
+
+apps:
+  - type: udp_echo 
+    client_node: Urcos
+    server_node: Ccatcca
+    server_device: "Josjo2-wimax2"
+    #server_node: Huiracochan
+    #server_device: wifi1
+    start: 1.0
+    stop: 9.0
+    packets: 2
+    interval: 1.0
+
+results:
+  flowmonitor:
+    save_xml: udp_echo.xml
+  #save_pcap:
+  #  - {filename: udp_echo.pcap, node: "Josjojauarina 1", device: "Josjo1-wifi1"}
+  plots:
+    - title: "Josjo network"
+      type: throughput
+      filename: udp_echo-throughput
+      flow_ids: [1, 2]
