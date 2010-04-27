@@ -54,21 +54,24 @@ def get_max_distance_in_network(nodes, node_member, terminal_members):
     return max(get_distance(nodes[terminal_member].location, node_location) 
                for terminal_member in terminal_members)
 
-def add_devices_to_node(node, network, ns3_device, helper=None, phy_helper=None):
+def get_device_key(net, system):
+    return net + "-" + system
+    
+def add_device_to_node(node, short_net_name, network, ns3_device, helper=None, phy_helper=None):
     """Add a ns-3 device to a node structure."""
     attributes = network[node.name]
-    system_name = attributes["system"]
+    device_key = get_device_key(short_net_name, attributes["system"])
     device = lib.Struct("Device", ns3_device=ns3_device, helper=helper,
-        phy_helper=phy_helper, interfaces=[])
-    node.devices[system_name] = device
+        phy_helper=phy_helper, interfaces=[], wimax_flow_services=[])
+    node.devices[device_key] = device
     
-def add_interface_to_device_node(node, network, address):
+def add_interface_to_device_node(node, short_net_name, network, address):
     """Add a ns-3 interface (address) to node.devices[system_name].interfaces."""
     attributes = network[node.name]
-    system_name = attributes["system"]
+    device_key = get_device_key(short_net_name, attributes["system"])
     interface = lib.Struct("Interface", address=address)
     logging.info("Add interface to node %s (%s)" % (node.name, str(address)))
-    node.devices[system_name].interfaces.append(interface)
+    node.devices[device_key].interfaces.append(interface)
 
 def set_wifi_timeouts(device, max_distance):
     """
@@ -113,12 +116,12 @@ def wifi_network(network_info, net_index, short_net_name, ns3_mode, nodes,
         ns3_node = nodes[name].ns3_node
         sta_device = wifi_helper.Install(phy, mac, ns3_node)
         node = get_node_from_ns3node(ns3_node)
-        add_devices_to_node(node, network_info, sta_device.Get(0), 
+        add_device_to_node(node, short_net_name, network_info, sta_device.Get(0), 
             helper=wifi_helper, phy_helper=phy)
         set_wifi_timeouts(sta_device.Get(0), max_distance)
         sta_interface = address_helper.Assign(sta_device)
         address = sta_interface.GetAddress(0)
-        add_interface_to_device_node(node, network_info, address)
+        add_interface_to_device_node(node, short_net_name, network_info, address)
             
     # STA devices & and interfaces    
     wifi_helper = ns3.WifiHelper.Default()
@@ -172,27 +175,16 @@ def wimax_network(network_info, net_index, short_net_name, nodes,
             #                      QAM16_34, QAM64_23, QAM64_34
             modtype = getattr(ns3.WimaxPhy, "MODULATION_TYPE_" + wimax_mode.upper())
             device.SetModulationType(modtype)
-        add_devices_to_node(node, network_info, device, helper=wimax_helper)
+        add_device_to_node(node, short_net_name, network_info, device, helper=wimax_helper)
         container = ns3.NetDeviceContainer()
         container.Add(device)
         interface = address_helper.Assign(container)
         address = interface.GetAddress(0)
-        add_interface_to_device_node(node, network_info, address)
+        add_interface_to_device_node(node, short_net_name, network_info, address)
         if device_type != ns3.WimaxHelper.DEVICE_TYPE_SUBSCRIBER_STATION:
             return
-        return # uncomment this to configure a default UDP down-link service flow
-        down_link_classifier = ns3.IpcsClassifierRecord(
-            ns3.Ipv4Address("0.0.0.0"),
-            ns3.Ipv4Mask("0.0.0.0"),
-            address,
-            ns3.Ipv4Mask("255.255.255.255"),
-            0, 65535, 0, 65535, 17, 0)
-        down_link_flow = wimax_helper.CreateServiceFlow(
-            ns3.ServiceFlow.SF_DIRECTION_DOWN,
-            ns3.ServiceFlow.SF_TYPE_BE,
-            down_link_classifier)
-        device.AddServiceFlow(down_link_flow)
-    
+        #return # uncomment this to configure a default UDP down-link service flow
+        
     for terminal_member in terminal_members:
         configure_node(terminal_member, ns3.WimaxHelper.DEVICE_TYPE_SUBSCRIBER_STATION)
                     
@@ -327,7 +319,7 @@ def create_network_from_yaml_file(yamlfile):
 
 def main(args, stream=sys.stdout):
     import optparse
-    usage = """Usage: %%prog [OPTIONS] radiomobile_report_txt_path
+    usage = """Usage: %prog [OPTIONS] RADIOMOBILE_REPORT
 
     Parse a Radio Mobile report and write the netinfo YML to stdout."""  
     parser = optparse.OptionParser(usage)
