@@ -1,6 +1,6 @@
 diff -r 02d1fc92d4c2 src/applications/onoff/onoff-application.cc
 --- a/src/applications/onoff/onoff-application.cc	Fri Apr 09 13:05:34 2010 +0200
-+++ b/src/applications/onoff/onoff-application.cc	Wed Apr 28 12:49:07 2010 +0200
++++ b/src/applications/onoff/onoff-application.cc	Wed Apr 28 12:52:44 2010 +0200
 @@ -36,6 +36,7 @@
  #include "ns3/trace-source-accessor.h"
  #include "onoff-application.h"
@@ -39,7 +39,7 @@ diff -r 02d1fc92d4c2 src/applications/onoff/onoff-application.cc
    m_totBytes += m_pktSize;
 diff -r 02d1fc92d4c2 src/applications/onoff/onoff-application.h
 --- a/src/applications/onoff/onoff-application.h	Fri Apr 09 13:05:34 2010 +0200
-+++ b/src/applications/onoff/onoff-application.h	Wed Apr 28 12:49:07 2010 +0200
++++ b/src/applications/onoff/onoff-application.h	Wed Apr 28 12:52:44 2010 +0200
 @@ -130,6 +130,7 @@
    EventId         m_sendEvent;    // Eventid of pending "send packet" event
    bool            m_sending;      // True if currently in sending state
