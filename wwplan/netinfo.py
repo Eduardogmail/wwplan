@@ -1,4 +1,5 @@
 #!/usr/bin/python
+"""Create a Netinfo (simplified network info) from a Radio Mobile network struct."""
 import sys
 import re
 

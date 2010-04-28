@@ -23,8 +23,6 @@ apps:
     client_node: Urcos
     server_node: Ccatcca
     server_device: "Josjo2-wimax2"
-    #server_node: Huiracochan
-    #server_device: wifi1
     start: 1.0
     stop: 9.0
     packets: 2

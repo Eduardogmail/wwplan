@@ -4,11 +4,15 @@
 Parse a Radio Mobile report.txt file and return a network Struct:
   
 Network Struct attributes:
+  
+  - generated_on: datetimeout object with generation date
+  - general_information: header of file (list of unprocessed lines)
   - units: Ordered dictionary of units
   - systems: Ordered dictionary of systems
   - nets: Ordered dictionary of sub-networks      
 
 >>> report = parse_report("myreport.txt")
+>>> report.generated_on
 >>> report.units["Urcos"]
 >>> report.systems["wifi1"]
 >>> report.nets["Josjo1 [wifia-6mbs]"]
@@ -64,9 +68,9 @@ def get_reference(coordinates):
 
 def get_lat_lon_from_string(line):
     """
-    Return tuple (latitude, longitude) for a coordinates string.
+    Return [latitude, longitude] for a coordinates string.
     
-    Example of line: "13°31'52"S 071°55'49"W"
+    Example of line: "13d31'52"S 071d55'49"W"
     """
     def _string_to_float(string):
         h, m, s, section = re.match("(\d+).*?(\d+).*?(\d+).*?([NSWE])", string).groups()
@@ -109,15 +113,16 @@ def parse_active_units(lines):
     units = create_odict_from_items("unit", "name", lib.parse_table(lines, headers))
     if units:
         for name, unit in units.iteritems():
+            unit.location = unit.location.replace("°", "d")            
             coords = get_lat_lon_from_string(unit.location)
-            units[name].location_coords = coords
+            units[name].location_coords = list(coords)
             elevation = int(float(re.match("([\d.]+)", unit.elevation).group(1)))
             units[name].elevation = elevation 
         unit1 = units.itervalues().next()
         reference = get_reference(unit1.location_coords)
         for name, unit in units.iteritems():
             units[name].location_meters = \
-                get_position_from_reference(unit.location_coords, reference)        
+                list(get_position_from_reference(unit.location_coords, reference))        
     return units
             
 def parse_systems(lines):
@@ -220,7 +225,7 @@ def main(args):
     import os
     import yaml
     if len(args) != 1:
-        sys.stderr.write("Usage: %s REPORT_TXT\n" % os.path.basename(sys.argv[0]))
+        sys.stderr.write("Usage: %s RADIOMOBILE_REPORT\n" % os.path.basename(sys.argv[0]))
         return 2
     text_report_filename, = args
     report = parse_report(text_report_filename)
