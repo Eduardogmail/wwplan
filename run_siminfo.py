@@ -9,7 +9,7 @@ import yaml
 
 import ns3
 import ns3_lib
-import ns3_radiomobile
+import network as network_mod
 
 def filter_dict_by_keys(d, reject_keys):
     """Return dictionary with pairs in d except those with keys in 'rejects_keys'"""
@@ -25,7 +25,7 @@ def siminfo(filename):
         logging.debug(line)
         
     assert "netinfo" in config, "missing compulsory variable: netinfo"
-    network = ns3_radiomobile.create_network_from_yaml_file(config["netinfo"])
+    network = network_mod.create_network_from_yaml_file(config["netinfo"])
     
     # Enable Logs    
     for name, string_flags in (config["logs"] or {}).iteritems():

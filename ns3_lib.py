@@ -5,7 +5,7 @@ import optparse
 import logging
 
 import lib
-import ns3_radiomobile
+import network as network_mod
 
 ### Plots
 
@@ -310,7 +310,7 @@ def run_simulation(network, stop=None):
 def set_logging_level(vlevel):
     levels = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
     level = levels[min(vlevel, len(levels)-1)]
-    ns3_radiomobile.set_logging_level(level)
+    network_mod.set_logging_level(level)
     
 def simulation_main(args, simulation, help):
     """Wraps a simulation function with command-line support."""
@@ -326,10 +326,10 @@ def simulation_main(args, simulation, help):
     set_logging_level(options.vlevel)
     
     if options.netinfo:
-        network = ns3_radiomobile.create_network_from_yaml_file(options.netinfo)
+        network = network_mod.create_network_from_yaml_file(options.netinfo)
     elif len(args0) == 1:
         report_filename, = args0
-        network = ns3_radiomobile.create_network_from_report_file(report_filename)
+        network = network_mod.create_network_from_report_file(report_filename)
     else:
         parser.print_help()
         return 2                

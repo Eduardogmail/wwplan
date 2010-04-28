@@ -34,16 +34,12 @@ import ns3
 
 import lib
 import radiomobile
+import netinfo as netinfo_mod
                                          
 def set_logging_level(level, format='%(levelname)s -- %(message)s'):
     """Set logging level (DEBUG, WARNING, INFO, ERROR) and message format."""
     logging.basicConfig(level=level, format=format)
    
-def bracket_split(s):
-    """Split a 's1 [s2]' string into a ('s1', 's2') tuple."""
-    match = re.match("^(.*?)\s*\[(.*)\]$\s*", s)
-    return (match.groups() if match else (s, None))
-
 def get_max_distance_in_network(nodes, node_member, terminal_members):
     """Get maximum distance between node and terminals."""
     def get_distance(t1, t2):
@@ -254,57 +250,10 @@ def create_network(netinfo):
     ns3.Ipv4GlobalRoutingHelper.PopulateRoutingTables()    
     return lib.Struct("Network", nodes=nodes, networks=networks)
 
-def get_netinfo_from_report(report):
-    """Get netinfo (dictionary) from Radio Mobile report struct."""
-    def _transform(d, properties):
-        for (k, v) in d.items():
-            if k in properties:
-                new_name, transform = properties[k]
-                transform = transform or (lambda x: x)
-                yield (new_name, transform(v))
-                    
-    output = {}
-            
-    units = {}
-    for unit_name, unit in report.units.iteritems():
-        transform_properties = {
-            "elevation": ("elevation", None),
-            "location_meters": ("location", lambda loc: list(loc)),
-        }
-        units[unit_name] = dict(_transform(vars(unit), transform_properties))
-    output["units"] = units
-    
-    networks = {}
-    for net_name, net in report.nets.iteritems():
-        short_net_name, smode = bracket_split(net_name)        
-        if smode.startswith("wifi"):
-            mode = dict(standard="wifi", wifi_mode=smode)
-        elif smode.startswith("wimax"):
-            sp = smode.split("-")
-            standard = "wimax"
-            scheduler = ("simple" if len(sp) < 2 else sp[1])
-            mode = dict(standard="wimax", wimax_scheduler=scheduler)        
-        nodes, terminals = lib.partition(net.net_members.items(),
-            lambda (name, member): member.role.lower() in ("node", "master"))
-        assert len(nodes) == 1
-        def _get_info(name, obj):
-            short_system_name, wimax_mode = bracket_split(obj.system)
-            d = dict(name=name, system=short_system_name, wimax_mode=wimax_mode)
-            return dict((k, v) for (k, v) in d.items() if v)                     
-        network_info = {
-            "mode": mode,
-            "node": _get_info(*nodes[0]),
-            "terminals": [_get_info(*terminal) for terminal in terminals],
-        }
-        networks[short_net_name] = network_info 
-    output["networks"] = networks
-    
-    return output
-  
 def create_network_from_report_file(filename):
     """Create a network Struct from a RadioMobile text-report filename."""
     report = radiomobile.parse_report(filename)
-    netinfo = get_netinfo_from_report(report)
+    netinfo = netinfo_mod.get_netinfo_from_report(report)
     logging.debug("Netinfo YML contents:")
     for line in yaml.dump(netinfo).splitlines():
         logging.debug("Netinfo: %s" % line.rstrip())
@@ -314,24 +263,3 @@ def create_network_from_yaml_file(yamlfile):
     """Create a network Struct from a YAML netinfo file."""
     netinfo = yaml.load(open(yamlfile).read())
     return create_network(netinfo)
-
-### Main
-
-def main(args, stream=sys.stdout):
-    import optparse
-    usage = """Usage: %prog [OPTIONS] RADIOMOBILE_REPORT
-
-    Parse a Radio Mobile report and write the netinfo YML to stdout."""  
-    parser = optparse.OptionParser(usage)
-    options, args0 = parser.parse_args(args)
-    
-    if len(args0) != 1:
-        parser.print_help()
-        return 2
-    report_filename, = args0
-    report = radiomobile.parse_report(report_filename)
-    netinfo = get_netinfo_from_report(report)
-    stream.write(yaml.dump(netinfo))    
-
-if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
