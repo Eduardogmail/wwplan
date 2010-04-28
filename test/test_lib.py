@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import unittest
-import lib
+from wwplan import lib
 
 class TestLibrary(unittest.TestCase):
     def test_first(self):

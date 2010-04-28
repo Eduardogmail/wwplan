@@ -18,8 +18,8 @@ import sys
 from datetime import datetime
 import math
 
-import lib
-from odict import odict
+from wwplan import lib
+from wwplan.odict import odict
 
 def get_distance(origin, destination):
     """

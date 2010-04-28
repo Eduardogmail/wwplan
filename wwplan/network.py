@@ -32,9 +32,9 @@ from pprint import pprint, pformat
 import yaml
 import ns3
 
-import lib
-import radiomobile
-import netinfo as netinfo_mod
+from wwplan import lib
+from wwplan import radiomobile
+import wwplan.netinfo
                                          
 def set_logging_level(level, format='%(levelname)s -- %(message)s'):
     """Set logging level (DEBUG, WARNING, INFO, ERROR) and message format."""
@@ -253,7 +253,7 @@ def create_network(netinfo):
 def create_network_from_report_file(filename):
     """Create a network Struct from a RadioMobile text-report filename."""
     report = radiomobile.parse_report(filename)
-    netinfo = netinfo_mod.get_netinfo_from_report(report)
+    netinfo = wwplan.netinfo.get_netinfo_from_report(report)
     logging.debug("Netinfo YML contents:")
     for line in yaml.dump(netinfo).splitlines():
         logging.debug("Netinfo: %s" % line.rstrip())

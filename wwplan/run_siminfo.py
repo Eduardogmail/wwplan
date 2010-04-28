@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import sys
+import os
 import optparse
 import operator
 import pprint
@@ -8,14 +9,14 @@ import logging
 import yaml
 
 import ns3
-import ns3_lib
-import network as network_mod
+from wwplan import ns3_lib
+from wwplan import network as wwnetwork
 
 def filter_dict_by_keys(d, reject_keys):
     """Return dictionary with pairs in d except those with keys in 'rejects_keys'"""
     return dict((k, v) for (k, v) in d.iteritems() if k not in reject_keys)
     
-def siminfo(filename):
+def siminfo(filename, stream=sys.stdout):
     """Run a simulation YML file."""
     logging.debug("Open simulation file: %s" % filename)
     config = yaml.load(open(filename).read())
@@ -25,7 +26,9 @@ def siminfo(filename):
         logging.debug(line)
         
     assert "netinfo" in config, "missing compulsory variable: netinfo"
-    network = network_mod.create_network_from_yaml_file(config["netinfo"])
+    siminfo_dir = os.path.dirname(os.path.abspath(filename))
+    netinfo_path = os.path.join(siminfo_dir, config["netinfo"])
+    network = wwnetwork.create_network_from_yaml_file(netinfo_path)
     
     # Enable Logs    
     for name, string_flags in (config["logs"] or {}).iteritems():
@@ -65,7 +68,7 @@ def siminfo(filename):
     ns3_lib.run_simulation(network, duration)
             
     # Results
-    ns3_lib.print_monitor_results(monitor_info)    
+    ns3_lib.print_monitor_results(monitor_info, stream=stream)    
     if "monitor" in config["results"]:
         xmlfile = results["monitor"].get("save_xml")
         if xmlfile:

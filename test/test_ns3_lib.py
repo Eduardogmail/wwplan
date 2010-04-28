@@ -7,19 +7,22 @@ import re
 from StringIO import StringIO
 
 import ns3
-import radiomobile
-import ns3_lib
+from wwplan import radiomobile
+from wwplan import ns3_lib
 
 def capture_stderr(func, *args, **kwargs):
     fd = tempfile.TemporaryFile()
     old_stderr = os.dup(sys.stderr.fileno())
     os.dup2(fd.fileno(), sys.stderr.fileno())
-    retvalue = func(*args, **kwargs)
+    try:
+        retvalue = func(*args, **kwargs)
+    except Exception:
+        os.dup2(old_stderr, sys.stderr.fileno())
+        raise        
     fd.seek(0)
     error_data = fd.read()
     fd.close()
     os.dup2(old_stderr, sys.stderr.fileno())
-    
     return error_data, retvalue
 
 class Ns3RadioMobileTest(unittest.TestCase):
@@ -30,16 +33,16 @@ class Ns3RadioMobileTest(unittest.TestCase):
     def test_simulation(self):    
         def simulation(network):
             ns3_lib.udp_echo_app(network, client_node="Urcos", server_node="Ccatcca", 
-                server_device="wimax2", start=1.0, stop=9.0, packets=2, interval=1.0)
-            ns3_lib.add_wimax_service_flow(network, install=("Ccatcca", "wimax2"), 
-                source=("Urpay", "wifi1", None), dest=("Ccatcca", "wimax2", 9), 
+                server_device="Josjo2-wimax2", start=1.0, stop=9.0, packets=2, interval=1.0)
+            ns3_lib.add_wimax_service_flow(network, install=("Ccatcca", "Josjo2-wimax2"), 
+                source=("Urcos", "Huiracochan-wifi1", None), dest=("Ccatcca", "Josjo2-wimax2", 9), 
                 protocol="udp", direction="down", scheduling="rtps", priority=0)
                 
             monitor_info = ns3_lib.enable_monitor(network, interval=0.1)
             
             ns3.LogComponentEnable("UdpEchoClientApplication", ns3.LOG_LEVEL_INFO)
             ns3.LogComponentEnable("UdpEchoServerApplication", ns3.LOG_LEVEL_INFO)
-            ns3_lib.run_simulation(5.0)
+            ns3_lib.run_simulation(network, 5.0)
             
             return monitor_info
             
@@ -69,8 +72,8 @@ Received 1024 bytes from 10.1.3.1""".strip()
         ns3_lib.print_monitor_results(monitor_info, show_histograms=True, stream=stream)
         results = stream.getvalue()        
          
-        re_flow1 = r"^Flow 1 \(UDP\) - 10.1.0.1/\d+ \(Urcos:wifi1\) --> 10.1.3.1/9 \(Ccatcca:wimax2\)"
-        re_flow2 = r"^Flow 2 \(UDP\) - 10.1.3.1/9 \(Ccatcca:wimax2\) --> 10.1.0.1/\d+ \(Urcos:wifi1\)"
+        re_flow1 = r"^Flow 1 \(UDP\) - 10.1.0.1/\d+ \(Urcos:Huiracochan-wifi1\) --> 10.1.3.1/9 \(Ccatcca:Josjo2-wimax2\)"
+        re_flow2 = r"^Flow 2 \(UDP\) - 10.1.3.1/9 \(Ccatcca:Josjo2-wimax2\) --> 10.1.0.1/\d+ \(Urcos:Huiracochan-wifi1\)"
         self.assert_(re.search(re_flow1, results, re.M))
         self.assert_(re.search(re_flow2, results, re.M))       
         

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import unittest
-import odict
+from wwplan import odict
 
 class TestLibrary(unittest.TestCase):
     def setUp(self):

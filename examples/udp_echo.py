@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys
 import ns3
-import ns3_lib
+from wwplan import ns3_lib
 
 ns3.LogComponentEnable("UdpEchoClientApplication", ns3.LOG_LEVEL_INFO | ns3.LOG_PREFIX_TIME)
 ns3.LogComponentEnable("UdpEchoServerApplication", ns3.LOG_LEVEL_INFO | ns3.LOG_PREFIX_TIME)

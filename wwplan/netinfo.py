@@ -4,8 +4,8 @@ import re
 
 import yaml
 
-import lib
-import radiomobile
+from wwplan import lib
+from wwplan import radiomobile
 
 def bracket_split(s):
     """Split a 's1 [s2]' string into a ('s1', 's2') tuple."""
@@ -23,7 +23,7 @@ def transform(d, properties):
             yield (new_name, transform(v))
                           
 def get_netinfo_from_report(report):
-    """Get netinfo (dictionary) from Radio Mobile report struct."""                    
+    """Return a netinfo (dictionary) from a Radio Mobile report struct."""
     output = {}
             
     units = {}

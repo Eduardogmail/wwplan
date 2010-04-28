@@ -4,7 +4,7 @@ import os
 import unittest
 from datetime import datetime
 
-import radiomobile
+from wwplan import radiomobile
 
 class RadioMobileReportTest(unittest.TestCase):
     def setUp(self):

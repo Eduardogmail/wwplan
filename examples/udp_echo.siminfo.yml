@@ -1,9 +1,9 @@
 description: UDP ping
 version: 0.0.1
-network: cusco-ne.netinfo.yml  
+netinfo: josjo.netinfo.yml  
 
 simulation:
-  duration: 10.0
+  duration: 5.0
 
 logs:
   UdpEchoClientApplication: "level_info|prefix_time"

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys
 import ns3
-import ns3_lib
+from wwplan import ns3_lib
 
 DESCRIPTION = "Run a OnOff client + sink server example"
 

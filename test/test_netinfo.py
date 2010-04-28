@@ -4,8 +4,8 @@ import unittest
 import os
 from StringIO import StringIO
 
-import radiomobile
-import netinfo
+from wwplan import radiomobile
+from wwplan import netinfo
 
 class Ns3RadioMobileTest(unittest.TestCase):
     def _get_report_file(self):

@@ -5,9 +5,9 @@ import os
 from StringIO import StringIO
 
 import ns3
-import lib
-import radiomobile
-import network as network_mod
+from wwplan import lib
+from wwplan import radiomobile
+from wwplan import network as wwnetwork
 
 class Ns3RadioMobileTest(unittest.TestCase):
     def _get_report_file(self):
@@ -19,12 +19,12 @@ class Ns3RadioMobileTest(unittest.TestCase):
         node2 = lib.Struct("node2_mock", location=(13, 24))
         node3 = lib.Struct("node3_mock", location=(12, 24))
         nodes = {"node1": node1, "node2": node2, "node3": node3}
-        max_distance = network_mod.get_max_distance_in_network(nodes, "node1", ["node2", "node3"])
+        max_distance = wwnetwork.get_max_distance_in_network(nodes, "node1", ["node2", "node3"])
         self.assertEqual(max_distance, 5.0)
 
     def test_create_network_from_report_file(self):
         path = self._get_report_file()
-        network = network_mod.create_network_from_report_file(path)
+        network = wwnetwork.create_network_from_report_file(path)
         josjo2 = network.nodes["Josjojauarina 2"]
         self.assertEqual(josjo2.name, "Josjojauarina 2")
         self.assert_(isinstance(josjo2.ns3_node, ns3.Node))         
