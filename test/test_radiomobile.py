@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*
 import os
 import unittest
 from datetime import datetime
@@ -32,7 +31,7 @@ class RadioMobileReportTest(unittest.TestCase):
     def test_unit_details(self):
         units = self.report.units
         urpay = units["Urpay"]
-        self.assertEqual("""09°19'45"S 075°17'41"W FI20IQ""", urpay.location) 
+        self.assertEqual("""09d19'45"S 075d17'41"W FI20IQ""", urpay.location) 
         self.assertEqual(248, urpay.elevation) 
             
     def test_systems(self):

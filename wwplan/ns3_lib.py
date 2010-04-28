@@ -4,8 +4,8 @@ import ns3
 import optparse
 import logging
 
-import lib
-import network as network_mod
+from wwplan import lib
+from wwplan import network as wwnetwork
 
 ### Plots
 
@@ -37,11 +37,7 @@ def create_througput_gnuplot(monitor_info, title, filename, flow_ids=None, image
 ### Monitoring
 
 def enable_monitor(network, interval=None):
-    """
-    Enable FlowMonitor and return a structure with state. 
-    
-    The state must be saved to call other functions in module.        
-    """    
+    """Enable FlowMonitor and return a structure with state."""
     def _ip2info_pairs():
         for node_name, node_attrs in network.nodes.iteritems():
             for device_name, device_attrs in node_attrs.devices.iteritems():
@@ -60,11 +56,8 @@ def enable_monitor(network, interval=None):
     flow_stats_steps = {}
     if interval is not None:
         ns3.Simulator.Schedule(ns3.Seconds(interval), _monitor_step, flow_stats_steps)
-    monitor_info = dict(
-        helper=flowmon_helper, 
-        monitor=monitor, 
-        ip2info=ip2info, 
-        flow_stats_steps=flow_stats_steps)
+    monitor_info = dict(helper=flowmon_helper, monitor=monitor, 
+        ip2info=ip2info, flow_stats_steps=flow_stats_steps)
     return monitor_info
 
 def get_flow_stats_deltas(pairs, attr):
@@ -118,9 +111,9 @@ def print_stats(output, flow_id, flow_stats, flow_stats_steps, show_histograms):
         output(1, "Packets dropped by reason %d: %d packets" % (reason, drops))
         
     if flow_id in flow_stats_steps:
-        result = ["%s=%s" % (delta, 8.0*value) for (delta, value) in 
+        result = ["%s=%0.2f" % (delta, 8.0*value/1e6) for (delta, value) in 
                   get_flow_stats_deltas(flow_stats_steps[flow_id], "rxBytes")]
-        output(1, "Rx Throughput steps (bps): %s" % ", ".join(result))
+        output(1, "Rx Throughput steps (Mbps): %s" % ", ".join(result))
 
 def print_monitor_results(monitor_info, show_histograms=False, stream=sys.stdout):
     """Print info about flow stats in simulation."""    
@@ -308,9 +301,10 @@ def run_simulation(network, stop=None):
 ### Main wrapper for Python simulations
 
 def set_logging_level(vlevel):
+    """Set logging level from integer (0: ERROR, 1: WARNING, 2: INFO, 3: DEBUG)."""
     levels = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
     level = levels[min(vlevel, len(levels)-1)]
-    network_mod.set_logging_level(level)
+    wwnetwork.set_logging_level(level)
     
 def simulation_main(args, simulation, help):
     """Wraps a simulation function with command-line support."""
@@ -326,10 +320,10 @@ def simulation_main(args, simulation, help):
     set_logging_level(options.vlevel)
     
     if options.netinfo:
-        network = network_mod.create_network_from_yaml_file(options.netinfo)
+        network = wwnetwork.create_network_from_yaml_file(options.netinfo)
     elif len(args0) == 1:
         report_filename, = args0
-        network = network_mod.create_network_from_report_file(report_filename)
+        network = wwnetwork.create_network_from_report_file(report_filename)
     else:
         parser.print_help()
         return 2                

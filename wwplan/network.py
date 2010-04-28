@@ -220,8 +220,8 @@ def create_network(netinfo):
         networks[name] = lib.Struct("network", node=node_member, terminals=terminal_members)
         mode = network["mode"]
         network_info = dict((d["name"], d) for d in [network["node"]] + network["terminals"])
-
                      
+        # Configure WiFi or WiMax devices
         if mode["standard"].startswith("wifi"):
             wifi_network(network_info, net_index, net_name, mode["wifi_mode"], nodes, 
                          get_node_from_ns3node, node_member, terminal_members)
@@ -242,7 +242,7 @@ def create_network(netinfo):
             node = nodes[member]
             allocator = ns3.ListPositionAllocator()
             position = tuple(node.location) + (0,) 
-            #position = (0, 0, 0)
+            #position = (0, 0, 0) # debug
             allocator.Add(ns3.Vector(*position))
             mobility.SetPositionAllocator(allocator)
             mobility.Install(node.ns3_node)
