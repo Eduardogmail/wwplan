@@ -1,6 +1,6 @@
 networks:
   Huiracochan:
-    mode: {standard: wifi, wifi_mode: wifia-6mbs}
+    mode: {standard: wifi, wifi_mode: wifib-1mbs}
     node: {name: Huiracochan, system: wifi1}
     terminals:
     - {name: Urcos, system: wifi1}
@@ -11,13 +11,13 @@ networks:
     - {name: Urpay, system: wifi1}
     - {name: Huiracochan, system: wifi1}
   Josjo1-Josjo2:
-    mode: {standard: wifi, wifi_mode: wifia-6mbs}
+    mode: {standard: wifi, wifi_mode: wifib-5.5mbs}
     node: {name: Josjojauarina 1, system: wifi1}
     terminals:
     - {name: Josjojauarina 2, system: wifi2}
   Josjo2:
     mode: {standard: wimax, wimax_scheduler: rtps}
-    node: {name: Josjojauarina 2, system: wimax1}
+    node: {name: Josjojauarina 2, system: wimax1, wimax_mode: all}
     terminals:
     - {name: Ccatcca, system: wimax2, wimax_mode: QAM64_34}
     - {name: Kcauri, system: wimax2, wimax_mode: QAM64_34}

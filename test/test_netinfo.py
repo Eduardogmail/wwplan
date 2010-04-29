@@ -45,7 +45,7 @@ class Ns3RadioMobileTest(unittest.TestCase):
         
         josjo2 = info["networks"]["Josjo2"]
         self.assertEqual(josjo2["mode"], {'standard': 'wimax', 'wimax_scheduler': 'rtps'})
-        self.assertEqual(josjo2["node"], {'name': 'Josjojauarina 2', 'system': 'wimax1'})
+        self.assertEqual(josjo2["node"], {'name': 'Josjojauarina 2', 'system': 'wimax1', 'wimax_mode': 'all'})
         self.assertEqual(josjo2["terminals"][0], 
             {'name': 'Ccatcca', 'system': 'wimax2', 'wimax_mode': 'QAM64_34'})
         self.assertEqual(josjo2["terminals"][1], 

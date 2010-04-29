@@ -20,8 +20,8 @@ class RadioMobileReportTest(unittest.TestCase):
         position2 = radiomobile.get_position_from_reference(unit2, reference)
         self.assertEqual(position2, (169469, 57747))
               
-    def test_generated_on(self):
-        self.assertEqual(datetime(2010, 4, 14, 13, 56, 45), self.report.generated_on)
+    #def test_generated_on(self):
+    #    self.assertEqual(datetime(2010, 4, 29, 10, 29, 58), self.report.generated_on)
                       
     def test_units(self):
         units = self.report.units
@@ -36,7 +36,7 @@ class RadioMobileReportTest(unittest.TestCase):
             
     def test_systems(self):
         systems = self.report.systems
-        expected_systems = ['wifi1', 'wifi2', 'wimax1', 'wimax2 [QAM64_34]', 'Sistema   5', 'Sistema   6', 'Sistema   7', 'Sistema   8', 'Sistema   9', 'Sistema  10', 'Sistema  11', 'Sistema  12', 'Sistema  13', 'Sistema  14', 'Sistema  15', 'Sistema  16', 'Sistema  17', 'Sistema  18', 'Sistema  19', 'Sistema  20', 'Sistema  21', 'Sistema  22', 'Sistema  23', 'Sistema  24', 'Sistema  25']
+        expected_systems = ['wifi1', 'wifi2', 'wimax1 [all]', 'wimax2 [QAM64_34]', 'Sistema   5', 'Sistema   6', 'Sistema   7', 'Sistema   8', 'Sistema   9', 'Sistema  10', 'Sistema  11', 'Sistema  12', 'Sistema  13', 'Sistema  14', 'Sistema  15', 'Sistema  16', 'Sistema  17', 'Sistema  18', 'Sistema  19', 'Sistema  20', 'Sistema  21', 'Sistema  22', 'Sistema  23', 'Sistema  24', 'Sistema  25']
         self.assertEqual(expected_systems, systems.keys())
 
     def test_system_details(self):
@@ -51,10 +51,10 @@ class RadioMobileReportTest(unittest.TestCase):
 
     def test_nets(self):
         nets = self.report.nets
-        expected_nets = ['Josjo1-Josjo2 [wifia-6mbs]', 'Josjo2 [wimax-rtps]', 'Josjo1 [wifia-6mbs]', 'Huiracochan [wifia-6mbs]']
+        expected_nets = ['Josjo1-Josjo2 [wifib-5.5mbs]', 'Josjo2 [wimax-rtps]', 'Josjo1 [wifia-6mbs]', 'Huiracochan [wifib-1mbs]']
         self.assertEqual(expected_nets, nets.keys())
         
-        net1 = nets['Josjo1-Josjo2 [wifia-6mbs]']
+        net1 = nets['Josjo1-Josjo2 [wifib-5.5mbs]']
         self.assertEqual(50, net1.max_quality)
         self.assertEqual(1, len(net1.links))
 

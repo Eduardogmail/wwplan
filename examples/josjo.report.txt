@@ -1,10 +1,10 @@
 ﻿
 Radio Mobile
-Report generated at 13:56:45 on 04-14-2010
+Report generated at 10:42:03 on 04-29-2010
 ---------------------------------------------------------------------------
 General information
 ---------------------------------------------------------------------------
-Net file      Z:\HOME\ARNAU\FREELANCE\EHAS\WIMAX\NS3-WIRELESS-PLANNING\RADIOMOBILE\EXAMPLES\CUSCO-NE\CUSCO-NE.NET
+Net file      Z:\HOME\ARNAU\FREELANCE\EHAS\WIMAX\WWPLAN\EXAMPLES\JOSJO.NET
 Map file      Z:\HOME\ARNAU\FREELANCE\EHAS\WIMAX\NS3-WIRELESS-PLANNING\RADIOMOBILE\EXAMPLES\CUSCO-NE\CUSCO-NE.MAP
 Map centre    09°21'36"S 075°03'09"W FI20LP
 Map size      50,0 km N-S, 100,29 E-W
@@ -27,7 +27,7 @@ Name                Pwr Tx    Loss  Loss (+)  Rx thr.   Ant. G. Ant. Type
 
 wifi1               10,000W   0,5dB 0,000dB/m -107,0dBm 2,0dBi  omni.ant
 wifi2               10,000W   0,5dB 0,000dB/m -107,0dBm 2,0dBi  omni.ant
-wimax1              10,000W   0,5dB 0,000dB/m -107,0dBm 2,0dBi  omni.ant
+wimax1 [all]        10,000W   0,5dB 0,000dB/m -107,0dBm 2,0dBi  omni.ant
 wimax2 [QAM64_34]   10,000W   0,5dB 0,000dB/m -107,0dBm 2,0dBi  omni.ant
 Sistema   5         10,000W   0,5dB 0,000dB/m -107,0dBm 2,0dBi  omni.ant
 Sistema   6         10,000W   0,5dB 0,000dB/m -107,0dBm 2,0dBi  omni.ant
@@ -54,7 +54,7 @@ Sistema  25         10,000W   0,5dB 0,000dB/m -107,0dBm 2,0dBi  omni.ant
 Active nets information
 ---------------------------------------------------------------------------
 
-Josjo1-Josjo2 [wifia-6mbs]          
+Josjo1-Josjo2 [wifib-5.5mbs]  
 Topology Star
 144,0 MHz to 148,0 MHz
 Vertical polarization
@@ -70,7 +70,7 @@ Josjojauarina 2            02 57    Slave         wifi2               2,0m
                            Quality = 50 - number of resend
 
 
-Josjo2 [wimax-rtps]                
+Josjo2 [wimax-rtps]           
 Topology Star
 144,0 MHz to 148,0 MHz
 Vertical polarization
@@ -80,14 +80,14 @@ Refractivity= 301 N-units, conductivity= 0,005 S/m, permittivity= 15
 Continental temperate climate
 
 Net members:               #  01 02 03 Role:         System:             Antenna:
-Josjojauarina 2            01    64 79 Master        wimax1              2,0m
+Josjojauarina 2            01    64 79 Master        wimax1 [all]        2,0m
 Ccatcca                    02 64       Slave         wimax2 [QAM64_34]   2,0m
 Kcauri                     03 79       Slave         wimax2 [QAM64_34]   2,0m
 
                            Quality = 50 - number of resend
 
 
-Josjo1 [wifia-6mbs]                 
+Josjo1 [wifia-6mbs]           
 Topology Star
 144,0 MHz to 148,0 MHz
 Vertical polarization
@@ -104,7 +104,7 @@ Huiracochan                03 81       Slave         wifi1               2,0m
                            Quality = 50 - number of resend
 
 
-Huiracochan [wifia-6mbs]            
+Huiracochan [wifib-1mbs]      
 Topology Star
 144,0 MHz to 148,0 MHz
 Vertical polarization
