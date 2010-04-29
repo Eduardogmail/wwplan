@@ -121,7 +121,6 @@ def wifi_network(network_info, net_index, short_net_name, ns3_mode, nodes,
             
     # STA devices & and interfaces    
     wifi_helper = ns3.WifiHelper.Default()
-    
     wifi_helper.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
         "DataMode", ns3.StringValue(ns3_mode),
         "RtsCtsThreshold", ns3.StringValue("2200"))

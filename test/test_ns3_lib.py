@@ -27,7 +27,7 @@ def capture_stderr(func, *args, **kwargs):
 
 class Ns3RadioMobileTest(unittest.TestCase):
     def _get_report_file(self):
-        filename = "josjo.report.txt"
+        filename = "josjo.netinfo.yml"
         return os.path.join(os.path.dirname(__file__), filename)
 
     def test_simulation(self):    

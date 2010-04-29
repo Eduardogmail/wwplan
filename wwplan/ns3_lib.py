@@ -308,22 +308,22 @@ def set_logging_level(vlevel):
     
 def simulation_main(args, simulation, help):
     """Wraps a simulation function with command-line support."""
-    usage = """Usage: %%prog [OPTIONS] radiomobile_report_txt_path
+    usage = """Usage: %%prog [OPTIONS] NETINFO
 
     %s""" % help 
     parser = optparse.OptionParser(usage)
     parser.add_option('-v', '--verbose', dest='vlevel', action="count",
       default=0, help='Increase verbose level)')
-    parser.add_option('-n', '--netinfo', dest='netinfo', 
-      default=None, help='Use a netinfo YML file')
+    parser.add_option('-r', '--report', dest='report', 
+      default=None, help='Use a Radio Mobile report file')
     options, args0 = parser.parse_args(args)
     set_logging_level(options.vlevel)
-    
-    if options.netinfo:
-        network = wwnetwork.create_network_from_yaml_file(options.netinfo)
+
+    if options.report:
+        network = wwnetwork.create_network_from_report_file(options.report)    
     elif len(args0) == 1:
-        report_filename, = args0
-        network = wwnetwork.create_network_from_report_file(report_filename)
+        filename, = args0
+        network = wwnetwork.create_network_from_yaml_file(filename)
     else:
         parser.print_help()
         return 2                
